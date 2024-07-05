@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Presenze</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        form { margin-bottom: 20px; }
+        input { margin-right: 10px; }
+        button { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Gestione Presenze</h1>
+    <form id="attendanceForm">
+        <input type="text" id="employeeId" placeholder="ID Dipendente" required />
+        <input type="date" id="date" required />
+        <input type="time" id="entryTime" required />
+        <input type="time" id="exitTime" required />
+        <button type="submit">Aggiungi Presenza</button>
+    </form>
+    <ul id="attendanceList"></ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const attendanceForm = document.getElementById('attendanceForm');
+            const attendanceList = document.getElementById('attendanceList');
+
+            const fetchAttendances = async () => {
+                const response = await fetch('/api/attendances');
+                const attendances = await response.json();
+                attendanceList.innerHTML = attendances.map(att => `
+                    <li>
+                        ${att.employeeId} - ${att.date} - ${att.entryTime} - ${att.exitTime}
+                        <button onclick="deleteAttendance(${att.id})">Cancella</button>
+                    </li>
+                `).join('');
+            };
+
+            attendanceForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newAttendance = {
+                    employeeId: document.getElementById('employeeId').value,
+                    date: document.getElementById('date').value,
+                    entryTime: document.getElementById('entryTime').value,
+                    exitTime: document.getElementById('exitTime').value
+                };
+                await fetch('/api/attendances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newAttendance)
+                });
+                fetchAttendances();
+            });
+
+            window.deleteAttendance = async (id) => {
+                await fetch(`/api/attendances/${id}`, {
+                    method: 'DELETE'
+                });
+                fetchAttendances();
+            };
+
+            fetchAttendances();
+        });
+    </script>
+</body>
+</html>
