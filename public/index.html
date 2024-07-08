@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Management</title>
+</head>
+<body>
+    <h1>Attendance Management</h1>
+    <form id="attendance-form">
+        <input type="text" id="employeeId" placeholder="Employee ID" required>
+        <input type="date" id="date" required>
+        <input type="time" id="entryTime" required>
+        <input type="time" id="exitTime" required>
+        <button type="submit">Add Attendance</button>
+    </form>
+    <h2>Attendances</h2>
+    <ul id="attendance-list"></ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('attendance-form');
+            const attendanceList = document.getElementById('attendance-list');
+
+            // Funzione per caricare le presenze
+            const loadAttendances = async () => {
+                const response = await fetch('/api/attendances');
+                const attendances = await response.json();
+                attendanceList.innerHTML = '';
+                attendances.forEach(attendance => {
+                    const li = document.createElement('li');
+                    li.textContent = `ID: ${attendance.employeeId}, Date: ${attendance.date}, Entry: ${attendance.entryTime}, Exit: ${attendance.exitTime}`;
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => deleteAttendance(attendance.id));
+                    li.appendChild(deleteButton);
+                    attendanceList.appendChild(li);
+                });
+            };
+
+            // Funzione per aggiungere una presenza
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newAttendance = {
+                    employeeId: document.getElementById('employeeId').value,
+                    date: document.getElementById('date').value,
+                    entryTime: document.getElementById('entryTime').value,
+                    exitTime: document.getElementById('exitTime').value
+                };
+                await fetch('/api/attendances', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newAttendance)
+                });
+                form.reset();
+                loadAttendances();
+            });
+
+            // Funzione per cancellare una presenza
+            const deleteAttendance = async (id) => {
+                await fetch(`/api/attendances/${id}`, {
+                    method: 'DELETE'
+                });
+                loadAttendances();
+            };
+
+            // Carica le presenze all'avvio
+            loadAttendances();
+        });
+    </script>
+</body>
+</html>
